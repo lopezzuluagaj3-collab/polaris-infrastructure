@@ -244,7 +244,6 @@ jobs:
         with:
           name: tfplan
 
-
       - name: Terraform Apply
         run: terraform apply tfplan
         env:
