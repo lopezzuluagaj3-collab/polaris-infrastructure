@@ -6,6 +6,7 @@ resource "aws_vpc"  "vpc_main"{
     tags = {
         Terraform = "true"
         Environment = "dev"
+        Name = "polaris-rt-private"
     }
     lifecycle {
       prevent_destroy = false
@@ -21,6 +22,7 @@ resource "aws_subnet" "subnet_public" {
     tags = {
         Terraform = "true"
         Environment = "dev"
+        Name = "polaris-subnet-publica"
     }
 }
 
@@ -32,6 +34,7 @@ resource "aws_subnet" "subnet_private" {
     tags = {
         Terraform = "true"
         Environment = "dev"
+        Name = "polaris-subnet-privada"
     }
 }
 
@@ -41,6 +44,7 @@ resource "aws_internet_gateway" "igw" {
     tags = {
         Terraform = "true"
         Environment = "dev"
+        Name = "polaris-igw"
     }
 }
 
@@ -50,6 +54,7 @@ resource "aws_eip" "nat_eip" {
   tags = {
     Terraform = "true"
     Environment = "dev"
+    Name = "polaris-nat-eip"
   }
 }
 
@@ -60,6 +65,7 @@ resource "aws_nat_gateway" "nat_gw" {
   tags = {
     Terraform = "true"
     Environment = "dev"
+    Name = "polaris-nat-gw"
   }
 }
 

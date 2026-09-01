@@ -5,6 +5,9 @@ resource "aws_instance" "svr_proxy" {
   vpc_security_group_ids      = [var.sg_proxy_id]
   key_name                    = "proxy_key"
   associate_public_ip_address = true
+  tags = {
+    Name = "proxy"
+  }
 
   metadata_options {
     http_tokens   = "required"
@@ -26,6 +29,9 @@ resource "aws_instance" "svr_airflow" {
     vpc_security_group_ids = [var.sg_airflow_id]
     key_name = "general_key"
     associate_public_ip_address = false
+    tags = {
+      Name = "airflow"
+    }
 
     metadata_options {
         http_tokens   = "required"
@@ -47,6 +53,9 @@ resource "aws_instance" "svr_rabbitMQ" {
     vpc_security_group_ids = [var.sg_rabbitMQ_id]
     key_name = "general_key"
     associate_public_ip_address = false
+    tags = {
+      Name = "rabbitmq"
+    }
 
     metadata_options {
         http_tokens   = "required"
@@ -83,7 +92,7 @@ resource "aws_instance" "svr_celery" {
     }
     tags = {
 
-        Name = "servidor-${count.index + 1}"
+        Name = "celery-${count.index + 1}"
     }
 }
 
@@ -94,6 +103,9 @@ resource "aws_instance" "svr_db" {
     vpc_security_group_ids = [var.sg_db_id]
     key_name = "general_key"
     associate_public_ip_address = false
+    tags = {
+      Name = "db"
+    }
 
     metadata_options {
         http_tokens   = "required"

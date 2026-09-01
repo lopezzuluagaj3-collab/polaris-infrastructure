@@ -43,8 +43,8 @@ resource "aws_security_group" "sg_proxy" {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
+        Name = "proxy"
     }
-
 }
 
 resource "aws_security_group" "sg_airflow" {
@@ -57,14 +57,14 @@ resource "aws_security_group" "sg_airflow" {
         from_port = 22
         to_port = 22
         protocol = "tcp"
-        cidr_blocks = [aws_security_group.sg_proxy.id]
+        security_groups = [aws_security_group.sg_proxy.id]
     }
     ingress {
         description = "ui airflow"
         from_port = 8080
         to_port = 8080
         protocol = "tcp"
-        cidr_blocks = [aws_security_group.sg_proxy.id]
+        security_groups = [aws_security_group.sg_proxy.id]
         }
 
     egress {
@@ -77,6 +77,7 @@ resource "aws_security_group" "sg_airflow" {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
+        Name = "airflow"
     }
 }
 
@@ -90,7 +91,7 @@ resource "aws_security_group" "sg_celery" {
         from_port = 22
         to_port = 22
         protocol = "tcp"
-        cidr_blocks = [aws_security_group.sg_proxy.id]
+        security_groups = [aws_security_group.sg_proxy.id]
     }
     egress {
         from_port   = 0
@@ -102,6 +103,7 @@ resource "aws_security_group" "sg_celery" {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
+        Name = "celery"
     }
 }
 
@@ -115,14 +117,14 @@ resource "aws_security_group" "sg_rabbitMQ" {
         from_port = 22
         to_port = 22
         protocol = "tcp"
-        cidr_blocks = [aws_security_group.sg_proxy.id]
-    } 
+        security_groups = [aws_security_group.sg_proxy.id]
+    }
     ingress {
         description = "port para el svr airflow"
         from_port = 5672
         to_port = 5672
         protocol = "tcp"
-        cidr_blocks = [aws_security_group.sg_airflow.id]
+        security_groups = [aws_security_group.sg_airflow.id]
     }
 
     ingress {
@@ -130,7 +132,7 @@ resource "aws_security_group" "sg_rabbitMQ" {
         from_port = 5672
         to_port = 5672
         protocol = "tcp"
-        cidr_blocks = [aws_security_group.sg_celery.id]
+        security_groups = [aws_security_group.sg_celery.id]
     }
     egress {
         from_port   = 0
@@ -142,6 +144,7 @@ resource "aws_security_group" "sg_rabbitMQ" {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
+        Name = "rabbitmq"
     }
 }
 
@@ -155,14 +158,14 @@ resource "aws_security_group" "sg_db" {
         from_port = 22
         to_port = 22
         protocol = "tcp"
-        cidr_blocks = [aws_security_group.sg_proxy.id]
+        security_groups = [aws_security_group.sg_proxy.id]
     }
     ingress {
         description = "port para el svr celery"
         from_port = 5432
         to_port = 5432
         protocol = "tcp"
-        cidr_blocks = [aws_security_group.sg_celery.id]
+        security_groups = [aws_security_group.sg_celery.id]
     }
     egress {
         from_port   = 0
@@ -174,5 +177,6 @@ resource "aws_security_group" "sg_db" {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
+        Name = "db"
     }
 }

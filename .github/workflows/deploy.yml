@@ -4,15 +4,19 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
+  pull-requests: write # Requerido para comentarios de Infracost en PRs
 
 jobs:
   plan:
-    name: 'Terraform Plan + SonarCloud Scan'
+    name: 'Terraform Plan + SonarCloud Scan + Infracost'
     runs-on: ubuntu-latest
 
     outputs:
@@ -39,6 +43,31 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      # ==========================================
+      # INTEGRACIÓN DE INFRACOST
+      # ==========================================
+      - name: Setup Infracost
+        uses: infracost/actions/setup@d5dd739fb5eae81f31bf09fea5c290186a91964a
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generar estimación de costos (Infracost)
+        run: |
+          infracost breakdown --path=. \
+                              --format=json \
+                              --out-file=infracost-report.json
+          infracost breakdown --path=. \
+                              --format=table \
+                              --out-file=infracost-report.txt
+
+      - name: Comentar Infracost en PR (si aplica)
+        if: github.event_name == 'pull_request'
+        uses: infracost/actions/comment@e9d6e6cd65e168e76b0de50ff9957d2fe8bb1832
+        with:
+          path: infracost-report.json
+          behavior: update
+      # ==========================================
+
       - name: Terraform Format
         run: terraform fmt
 
@@ -56,9 +85,9 @@ jobs:
           framework: terraform
           output_format: cli,json
           output_file_path: checkov-report.txt,checkov-report.json
-          soft_fail: true  # no bloquea el pipeline por defecto...
-          hard_fail_on: CKV_AWS_79  # ...pero SÍ bloquea si aparece IMDSv1 (riesgo real)
-          skip_check: CKV_AWS_88,CKV_AWS_130,CKV_AWS_260,CKV_AWS_24,CKV_AWS_273  # falsos positivos ya conocidos en esta arquitectura
+          soft_fail: true
+          hard_fail_on: CKV_AWS_79
+          skip_check: CKV_AWS_88,CKV_AWS_130,CKV_AWS_260,CKV_AWS_24,CKV_AWS_273
           download_external_modules: true
         env:
           PRISMA_API_URL: https://api.prismacloud.io
@@ -162,11 +191,11 @@ jobs:
       - name: Asegurar que existan los reportes antes de adjuntar
         if: always()
         run: |
-          for f in plan_output.txt sonar_result.txt checkov-report.txt checkov-report.json; do
+          for f in plan_output.txt sonar_result.txt checkov-report.txt checkov-report.json infracost-report.txt; do
             [ -f "$f" ] || touch "$f"
           done
 
-      - name: Enviar correo con resultado del plan, SonarCloud y Checkov
+      - name: Enviar correo con resultado del plan, SonarCloud, Checkov e Infracost
         if: always()
         uses: dawidd6/action-send-mail@4226df7daafa6fc901a43789c49bf7ab309066e7
         with:
@@ -174,15 +203,16 @@ jobs:
           server_port: 465
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "Terraform Plan + SonarCloud + Checkov - Sirius (pendiente de aprobación)"
+          subject: "Terraform Plan + SonarCloud + Checkov + Infracost - Sirius"
           to: ${{ secrets.NOTIFY_EMAIL }}
           from: "CI Sirius <${{ secrets.SMTP_USERNAME }}>"
-          body: "Se generó (o se intentó generar) un nuevo plan de Terraform para Sirius. Revisa los adjuntos: si algún paso falló en el pipeline, el archivo correspondiente lo indicará. El apply queda bloqueado hasta tu aprobación manual en GitHub Actions."
+          body: "Se generó el análisis de Terraform para Sirius. Revisa los adjuntos para ver el plan, reporte de seguridad, calidad de código y estimación de costos de infraestructura."
           attachments: |
             plan_output.txt
             sonar_result.txt
             checkov-report.txt
             checkov-report.json
+            infracost-report.txt
 
   apply:
     name: 'Terraform Apply (requiere aprobación manual)'
@@ -214,8 +244,6 @@ jobs:
         with:
           name: tfplan
 
-      - name: Listar estado remoto
-        run: terraform state list
 
       - name: Terraform Apply
         run: terraform apply tfplan
