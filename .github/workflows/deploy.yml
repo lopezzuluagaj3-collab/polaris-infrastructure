@@ -62,11 +62,13 @@ jobs:
 
       - name: Comentar Infracost en PR (si aplica)
         if: github.event_name == 'pull_request'
-        uses: infracost/actions/comment@e9d6e6cd65e168e76b0de50ff9957d2fe8bb1832
-        with:
-          path: infracost-report.json
-          behavior: update
-      # ==========================================
+        run: |
+            infracost comment github --path=infracost-report.json \
+                              --repo="$GITHUB_REPOSITORY" \
+                              --github-token="${{ github.token }}" \
+                              --pull-request="${{ github.event.pull_request.number }}" \
+                              --behavior=update
+
 
       - name: Terraform Format
         run: terraform fmt
