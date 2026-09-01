@@ -214,9 +214,6 @@ jobs:
         with:
           name: tfplan
 
-      - name: Listar estado remoto
-        run: terraform state list
-
       - name: Terraform Apply
         run: terraform apply tfplan
         env:
