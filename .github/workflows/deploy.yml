@@ -43,6 +43,20 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+        
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.55.0
+
+      - name: Inicializar TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ejecutar TFLint
+        run: tflint -f compact
+
       # ==========================================
       # INTEGRACIÓN DE INFRACOST
       # ==========================================
