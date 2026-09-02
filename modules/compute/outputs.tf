@@ -1,6 +1,6 @@
 output "proxy_public_ip" {
-  description = "IP pública del proxy (punto de entrada SSH)"
-  value       = aws_instance.svr_proxy.public_ip
+  description = "IP pública fija del proxy (punto de entrada SSH)"
+  value       = aws_eip.proxy_eip.public_ip
 }
 
 output "celery_private_ip" {
