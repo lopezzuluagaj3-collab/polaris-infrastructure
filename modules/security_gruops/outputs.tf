@@ -8,8 +8,8 @@ output "sg_airflow_id" {
   value       = aws_security_group.sg_airflow.id
 }
 
-output "sg_rebbitMQ" {
-  description = "ID del security group de svr rabbitQM"
+output "sg_rabbitMQ_id" {
+  description = "ID del security group de svr rabbitMQ"
   value       = aws_security_group.sg_rabbitMQ.id
 }
 

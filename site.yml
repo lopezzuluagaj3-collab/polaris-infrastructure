@@ -1,0 +1,18 @@
+---
+- name: 1. Configurar Control Plane de Kubernetes
+  hosts: svr-airflow
+  become: true
+  roles:
+    - k8s_master
+
+- name: 2. Unir Nodos Workers al Clúster
+  hosts: svr-rabbit:svr-celery-1:svr-celery-2:svr-db
+  become: true
+  roles:
+    - k8s_worker
+
+- name: 3. Instalar Tooling y Cilium CNI en el Control Plane
+  hosts: svr-airflow
+  become: true
+  roles:
+    - helm

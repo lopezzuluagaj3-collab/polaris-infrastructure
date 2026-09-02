@@ -48,24 +48,61 @@ resource "aws_security_group" "sg_proxy" {
 }
 
 resource "aws_security_group" "sg_airflow" {
-    name = "sg_airflow"
-    description = "grupo de seguridad para el svr airlfow"
-    vpc_id = var.vpc_id
+    name        = "sg_airflow"
+    description = "grupo de seguridad para el svr airflow / k3s control plane"
+    vpc_id      = var.vpc_id
+
+    lifecycle {
+        ignore_changes = [description]
+    }
 
     ingress {
-        description = "SSH desde el svr proxy"
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
+        description     = "SSH desde el svr proxy"
+        from_port       = 22
+        to_port         = 22
+        protocol        = "tcp"
         security_groups = [aws_security_group.sg_proxy.id]
     }
+
     ingress {
-        description = "ui airflow"
-        from_port = 8080
-        to_port = 8080
-        protocol = "tcp"
+        description     = "ui airflow"
+        from_port       = 8080
+        to_port         = 8080
+        protocol        = "tcp"
         security_groups = [aws_security_group.sg_proxy.id]
-        }
+    }
+
+    ingress {
+        description     = "K3s API Server desde nodos workers"
+        from_port       = 6443
+        to_port         = 6443
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Cilium VXLAN Overlay entre nodos"
+        from_port       = 8472
+        to_port         = 8472
+        protocol        = "udp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Kubelet API"
+        from_port       = 10250
+        to_port         = 10250
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Cilium health/monitoring"
+        from_port       = 4240
+        to_port         = 4240
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
 
     egress {
         from_port   = 0
@@ -73,110 +110,207 @@ resource "aws_security_group" "sg_airflow" {
         protocol    = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
+
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
-        Name = "airflow"
+        Name        = "airflow"
     }
 }
 
 resource "aws_security_group" "sg_celery" {
-    name = "sg_celery"
-    description =  "grupo de seguridad para el svr celery"
-    vpc_id = var.vpc_id
+    name        = "sg_celery"
+    description = "grupo de seguridad para el svr celery"
+    vpc_id      = var.vpc_id
 
     ingress {
-        description = "port para el svr proxy"
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
+        description     = "SSH desde el svr proxy"
+        from_port       = 22
+        to_port         = 22
+        protocol        = "tcp"
         security_groups = [aws_security_group.sg_proxy.id]
     }
+
+    ingress {
+        description     = "K3s API Server desde nodos workers"
+        from_port       = 6443
+        to_port         = 6443
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Cilium VXLAN Overlay entre nodos"
+        from_port       = 8472
+        to_port         = 8472
+        protocol        = "udp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Kubelet API"
+        from_port       = 10250
+        to_port         = 10250
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Cilium health/monitoring"
+        from_port       = 4240
+        to_port         = 4240
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
     egress {
         from_port   = 0
         to_port     = 0
         protocol    = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
+
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
-        Name = "celery"
+        Name        = "celery"
     }
 }
 
 resource "aws_security_group" "sg_rabbitMQ" {
-    name = "sg_rabbitMQ"
+    name        = "sg_rabbitMQ"
     description = "grupo de seguridad para el svr rabbitMQ"
-    vpc_id =  var.vpc_id
+    vpc_id      = var.vpc_id
 
     ingress {
-        description = "port para el svr proxy"
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
+        description     = "SSH desde el svr proxy"
+        from_port       = 22
+        to_port         = 22
+        protocol        = "tcp"
         security_groups = [aws_security_group.sg_proxy.id]
     }
+
     ingress {
-        description = "port para el svr airflow"
-        from_port = 5672
-        to_port = 5672
-        protocol = "tcp"
-        security_groups = [aws_security_group.sg_airflow.id]
+        description     = "RabbitMQ desde la VPC"
+        from_port       = 5672
+        to_port         = 5672
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
     }
 
     ingress {
-        description = "port para el svr celery"
-        from_port = 5672
-        to_port = 5672
-        protocol = "tcp"
-        security_groups = [aws_security_group.sg_celery.id]
+        description     = "K3s API Server desde nodos workers"
+        from_port       = 6443
+        to_port         = 6443
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
     }
+
+    ingress {
+        description     = "Cilium VXLAN Overlay entre nodos"
+        from_port       = 8472
+        to_port         = 8472
+        protocol        = "udp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Kubelet API"
+        from_port       = 10250
+        to_port         = 10250
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Cilium health/monitoring"
+        from_port       = 4240
+        to_port         = 4240
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
     egress {
         from_port   = 0
         to_port     = 0
         protocol    = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
+
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
-        Name = "rabbitmq"
+        Name        = "rabbitmq"
     }
 }
 
 resource "aws_security_group" "sg_db" {
-    name = "sg_db"
+    name        = "sg_db"
     description = "grupo de seguridad para el svr db"
-    vpc_id = var.vpc_id
+    vpc_id      = var.vpc_id
 
     ingress {
-        description = "port para el svr proxy"
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
+        description     = "SSH desde el svr proxy"
+        from_port       = 22
+        to_port         = 22
+        protocol        = "tcp"
         security_groups = [aws_security_group.sg_proxy.id]
     }
+
     ingress {
-        description = "port para el svr celery"
-        from_port = 5432
-        to_port = 5432
-        protocol = "tcp"
-        security_groups = [aws_security_group.sg_celery.id]
+        description     = "PostgreSQL desde la VPC"
+        from_port       = 5432
+        to_port         = 5432
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
     }
+
+    ingress {
+        description     = "K3s API Server desde nodos workers"
+        from_port       = 6443
+        to_port         = 6443
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Cilium VXLAN Overlay entre nodos"
+        from_port       = 8472
+        to_port         = 8472
+        protocol        = "udp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Kubelet API"
+        from_port       = 10250
+        to_port         = 10250
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
+    ingress {
+        description     = "Cilium health/monitoring"
+        from_port       = 4240
+        to_port         = 4240
+        protocol        = "tcp"
+        cidr_blocks     = [var.vpc_cidr]
+    }
+
     egress {
         from_port   = 0
         to_port     = 0
         protocol    = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
+
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
         Environment = "prob"
-        Name = "db"
+        Name        = "db"
     }
 }

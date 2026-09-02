@@ -1,5 +1,8 @@
-# Created by https://www.toptal.com/developers/gitignore/api/terraform
-# Edit at https://www.toptal.com/developers/gitignore?templates=terraform
+# Created by https://www.toptal.com/developers/gitignore/api/terraform,ansible
+# Edit at https://www.toptal.com/developers/gitignore?templates=terraform,ansible
+
+### Ansible ###
+*.retry
 
 ### Terraform ###
 # Local .terraform directories
@@ -37,4 +40,4 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# End of https://www.toptal.com/developers/gitignore/api/terraform
+# End of https://www.toptal.com/developers/gitignore/api/terraform,ansible

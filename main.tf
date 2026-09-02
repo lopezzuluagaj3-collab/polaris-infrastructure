@@ -21,16 +21,6 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
-}
-
 module "networking"{
     source = "./modules/networking"
 
@@ -47,17 +37,17 @@ module "security_gruops" {
 
     vpc_id = module.networking.vpc_id
     cidr_admin = var.allowed_cidr
-    vpc_cidr = "10.0.0.0/16"
+    vpc_cidr = "12.0.0.0/16"
 }
 
 module "compute" {
   source = "./modules/compute"
-  ami                  = data.aws_ami.ubuntu.id
+  ami                  = "ami-0b6d9d3d33ba97d99"
   subnet_publica_id    = module.networking.subnet_publica_id
   subnet_privada_id    = module.networking.subnet_privada_id
   sg_proxy_id          = module.security_gruops.sg_proxy_id
   sg_airflow_id        = module.security_gruops.sg_airflow_id
-  sg_rabbitMQ_id       = module.security_gruops.sg_rebbitMQ
+  sg_rabbitMQ_id       = module.security_gruops.sg_rabbitMQ_id
   sg_celery_id         = module.security_gruops.sg_celery_id
   sg_db_id             = module.security_gruops.sg_db_id
   key_proxy            = "proxy_key"
