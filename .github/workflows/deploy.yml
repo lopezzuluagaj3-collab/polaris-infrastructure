@@ -45,7 +45,7 @@ jobs:
 
         
       - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
+        uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6
         with:
           tflint_version: v0.55.0
 
@@ -55,11 +55,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Ejecutar TFLint
-        run: tflint -f compact
+        if: always()
+        run: |
+          tflint -f compact | tee tflint-report.txt
 
-      # ==========================================
-      # INTEGRACIÓN DE INFRACOST
-      # ==========================================
+
       - name: Setup Infracost
         uses: infracost/actions/setup@d5dd739fb5eae81f31bf09fea5c290186a91964a
         with:
@@ -207,7 +207,7 @@ jobs:
       - name: Asegurar que existan los reportes antes de adjuntar
         if: always()
         run: |
-          for f in plan_output.txt sonar_result.txt checkov-report.txt checkov-report.json infracost-report.txt; do
+          for f in plan_output.txt sonar_result.txt checkov-report.txt checkov-report.json infracost-report.txt tflint-report.txt; do
             [ -f "$f" ] || touch "$f"
           done
 
@@ -229,6 +229,7 @@ jobs:
             checkov-report.txt
             checkov-report.json
             infracost-report.txt
+            tflint-report.txt
 
   apply:
     name: 'Terraform Apply (requiere aprobación manual)'
