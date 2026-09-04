@@ -104,6 +104,14 @@ resource "aws_security_group" "sg_airflow" {
         cidr_blocks     = [var.vpc_cidr]
     }
 
+    ingress {
+        description     = "ingress-nginx NodePort HTTP/HTTPS desde el svr proxy"
+        from_port       = 30080
+        to_port         = 30443
+        protocol        = "tcp"
+        security_groups = [aws_security_group.sg_proxy.id]
+    }
+
     egress {
         from_port   = 0
         to_port     = 0
