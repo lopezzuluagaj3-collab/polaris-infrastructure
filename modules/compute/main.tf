@@ -17,10 +17,11 @@ resource "aws_instance" "svr_proxy" {
   subnet_id                   = var.subnet_publica_id
   vpc_security_group_ids      = [var.sg_proxy_id]
   key_name                    = "proxy_key"
-  associate_public_ip_address = false
-  tags = {
-    Name = "proxy"
-  }
+   associate_public_ip_address = false
+   iam_instance_profile        = var.iam_instance_profile_name
+   tags = {
+     Name = "proxy"
+   }
 
   lifecycle {
     ignore_changes = [associate_public_ip_address]
@@ -46,6 +47,7 @@ resource "aws_instance" "svr_airflow" {
     vpc_security_group_ids = [var.sg_airflow_id]
     key_name = "general_key"
     associate_public_ip_address = false
+    iam_instance_profile        = var.iam_instance_profile_name
     tags = {
       Name = "airflow"
     }
@@ -70,6 +72,7 @@ resource "aws_instance" "svr_rabbitMQ" {
     vpc_security_group_ids = [var.sg_rabbitMQ_id]
     key_name = "general_key"
     associate_public_ip_address = false
+    iam_instance_profile        = var.iam_instance_profile_name
     tags = {
       Name = "rabbitmq"
     }
@@ -95,6 +98,7 @@ resource "aws_instance" "svr_celery" {
     vpc_security_group_ids = [var.sg_celery_id]
     key_name = "general_key"
     associate_public_ip_address = false
+    iam_instance_profile        = var.iam_instance_profile_name
 
     metadata_options {
         http_tokens   = "required"
@@ -120,6 +124,7 @@ resource "aws_instance" "svr_db" {
     vpc_security_group_ids = [var.sg_db_id]
     key_name = "general_key"
     associate_public_ip_address = false
+    iam_instance_profile        = var.iam_instance_profile_name
     tags = {
       Name = "db"
     }

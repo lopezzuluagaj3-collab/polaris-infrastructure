@@ -48,6 +48,11 @@ variable "key_general" {
   type        = string
 }
 
+variable "iam_instance_profile_name" {
+  description = "Nombre del instance profile IAM para las instancias EC2"
+  type        = string
+}
+
 variable "environment" {
   description = "Ambiente de despliegue"
   type        = string

@@ -40,6 +40,16 @@ module "security_gruops" {
     vpc_cidr = "12.0.0.0/16"
 }
 
+module "iam" {
+    source = "./modules/iam"
+
+    role_name              = "polaris-ec2-role"
+    instance_profile_name  = "polaris-ec2-profile"
+    policy_name            = "polaris-ec2-ebs-policy"
+    environment            = "prod"
+    owner                  = "juan"
+}
+
 module "compute" {
   source = "./modules/compute"
   ami                  = "ami-0b6d9d3d33ba97d99"
@@ -52,4 +62,5 @@ module "compute" {
   sg_db_id             = module.security_gruops.sg_db_id
   key_proxy            = "proxy_key"
   key_general          = "general_key"
+  iam_instance_profile_name = module.iam.instance_profile_name
 }
