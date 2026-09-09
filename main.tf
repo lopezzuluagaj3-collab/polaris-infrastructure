@@ -36,7 +36,7 @@ module "security_gruops" {
     source = "./modules/security_gruops"
 
     vpc_id = module.networking.vpc_id
-    cidr_admin = var.allowed_cidr
+    cidr_admin = var.allowed_ssh_cidr
     vpc_cidr = "12.0.0.0/16"
 }
 
@@ -46,6 +46,7 @@ module "iam" {
     role_name              = "polaris-ec2-role"
     instance_profile_name  = "polaris-ec2-profile"
     policy_name            = "polaris-ec2-ebs-policy"
+    user_name              = "polaris-ec2-user"
     environment            = "prod"
     owner                  = "juan"
 }

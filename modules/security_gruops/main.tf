@@ -42,7 +42,7 @@ resource "aws_security_group" "sg_proxy" {
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
-        Environment = "prob"
+        Environment = "prod"
         Name = "proxy"
     }
 }
@@ -122,7 +122,7 @@ resource "aws_security_group" "sg_airflow" {
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
-        Environment = "prob"
+        Environment = "prod"
         Name        = "airflow"
     }
 }
@@ -182,7 +182,7 @@ resource "aws_security_group" "sg_celery" {
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
-        Environment = "prob"
+        Environment = "prod"
         Name        = "celery"
     }
 }
@@ -250,7 +250,7 @@ resource "aws_security_group" "sg_rabbitMQ" {
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
-        Environment = "prob"
+        Environment = "prod"
         Name        = "rabbitmq"
     }
 }
@@ -318,7 +318,7 @@ resource "aws_security_group" "sg_db" {
     tags = {
         Project     = "polaris_etl"
         ManagedBy   = "Terraform"
-        Environment = "prob"
+        Environment = "prod"
         Name        = "db"
     }
 }

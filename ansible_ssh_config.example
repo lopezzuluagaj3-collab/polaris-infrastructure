@@ -1,0 +1,27 @@
+Host proxy
+    HostName <PROXY_PUBLIC_IP>
+    User ubuntu
+    IdentityFile ~/.ssh/proxy_key.pem
+    ForwardAgent yes
+Host svr* proxy
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%r@%h:%p
+    ControlPersist 10m
+Host svr*
+    IdentityFile ~/.ssh/general_key.pem
+    User ubuntu
+Host svr-airflow
+    HostName <AIRFLOW_PRIVATE_IP>
+    ProxyJump proxy
+Host svr-rabbit
+    HostName <RABBITMQ_PRIVATE_IP>
+    ProxyJump proxy
+Host svr-celery-1
+    HostName <CELERY_1_PRIVATE_IP>
+    ProxyJump proxy
+Host svr-celery-2
+    HostName <CELERY_2_PRIVATE_IP>
+    ProxyJump proxy
+Host svr-db
+    HostName <DB_PRIVATE_IP>
+    ProxyJump proxy

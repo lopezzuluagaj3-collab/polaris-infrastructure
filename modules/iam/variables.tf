@@ -27,3 +27,9 @@ variable "owner" {
   type        = string
   default     = "juan"
 }
+
+variable "user_name" {
+  description = "Nombre del usuario IAM que consume los recursos"
+  type        = string
+  default     = "ebs-csi-driver-user"
+}

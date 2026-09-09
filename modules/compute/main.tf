@@ -17,11 +17,11 @@ resource "aws_instance" "svr_proxy" {
   subnet_id                   = var.subnet_publica_id
   vpc_security_group_ids      = [var.sg_proxy_id]
   key_name                    = "proxy_key"
-   associate_public_ip_address = false
-   iam_instance_profile        = var.iam_instance_profile_name
-   tags = {
-     Name = "proxy"
-   }
+  associate_public_ip_address = false
+  iam_instance_profile        = var.iam_instance_profile_name
+  tags = {
+    Name = "proxy"
+  }
 
   lifecycle {
     ignore_changes = [associate_public_ip_address]
@@ -30,7 +30,9 @@ resource "aws_instance" "svr_proxy" {
   metadata_options {
     http_tokens   = "required"
     http_endpoint = "enabled"
+    http_put_response_hop_limit = 2   
   }
+
 
   root_block_device {
     volume_size           = 32
@@ -55,6 +57,7 @@ resource "aws_instance" "svr_airflow" {
     metadata_options {
         http_tokens   = "required"
         http_endpoint = "enabled"
+        http_put_response_hop_limit = 2   
     }
 
     root_block_device {
@@ -80,6 +83,7 @@ resource "aws_instance" "svr_rabbitMQ" {
     metadata_options {
         http_tokens   = "required"
         http_endpoint = "enabled"
+        http_put_response_hop_limit = 2   
     }
 
     root_block_device {
@@ -103,6 +107,7 @@ resource "aws_instance" "svr_celery" {
     metadata_options {
         http_tokens   = "required"
         http_endpoint = "enabled"
+        http_put_response_hop_limit = 2   
     }
 
     root_block_device {
@@ -132,6 +137,7 @@ resource "aws_instance" "svr_db" {
     metadata_options {
         http_tokens   = "required"
         http_endpoint = "enabled"
+        http_put_response_hop_limit = 2   
     }
 
     root_block_device {
