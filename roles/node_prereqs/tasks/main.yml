@@ -1,0 +1,53 @@
+---
+# Prerrequisitos estándar de k3s + Cilium (eBPF) que el instalador de k3s
+# aplica de forma implícita hoy, pero que no están declarados en ninguna
+# role del playbook. Declararlos explícitamente hace la infra reproducible
+# aunque cambie el método de instalación de k3s en el futuro.
+# Aplicar a TODOS los nodos (control-plane y workers) antes de k8s_master/k8s_worker.
+
+- name: Desactivar swap (requerido por Kubernetes/k3s)
+  ansible.builtin.command: swapoff -a
+  changed_when: true
+
+- name: Quitar entradas de swap de /etc/fstab (persistente entre reinicios)
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\sswap\s.*)$'
+    replace: '# \1'
+
+- name: Cargar módulos de kernel requeridos (overlay, br_netfilter)
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Persistir la carga de módulos en el arranque
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k3s-cilium.conf
+    content: |
+      overlay
+      br_netfilter
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Aplicar sysctls requeridos por k3s/Cilium (bridge + forwarding)
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    state: present
+    reload: true
+  loop:
+    - { name: "net.bridge.bridge-nf-call-iptables", value: "1" }
+    - { name: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
+    - { name: "net.ipv4.ip_forward", value: "1" }
+
+- name: Deshabilitar ufw si está presente (evita conflictos con Cilium/iptables)
+  ansible.builtin.systemd:
+    name: ufw
+    state: stopped
+    enabled: false
+  failed_when: false

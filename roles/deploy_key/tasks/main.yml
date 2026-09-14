@@ -1,0 +1,61 @@
+- name: Generar par de llaves SSH para el deploy key (si no existe)
+  community.crypto.openssh_keypair:
+    path: "/home/{{ deploy_key_user }}/.ssh/{{ deploy_key_name }}"
+    type: ed25519
+    owner: "{{ deploy_key_user }}"
+    group: "{{ deploy_key_user }}"
+    mode: '0600'
+  become: true
+  register: deploy_keypair
+
+- name: Leer la llave pública generada
+  ansible.builtin.slurp:
+    src: "/home/{{ deploy_key_user }}/.ssh/{{ deploy_key_name }}.pub"
+  register: deploy_pubkey_raw
+  become: true
+
+- name: Registrar la llave como Deploy Key en GitHub
+  ansible.builtin.uri:
+    url: "https://api.github.com/repos/{{ github_runner_owner }}/{{ github_runner_repo }}/keys"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ github_pat }}"
+      Accept: "application/vnd.github+json"
+    body_format: json
+    body:
+      title: "{{ deploy_key_title }}"
+      key: "{{ deploy_pubkey_raw.content | b64decode | trim }}"
+      read_only: true
+    status_code: [201, 422]
+    return_content: true
+  delegate_to: localhost
+  become: false
+  register: deploy_key_response
+
+- name: Agregar github.com a known_hosts para evitar prompt interactivo
+  ansible.builtin.known_hosts:
+    name: github.com
+    key: "{{ lookup('pipe', 'ssh-keyscan -t ed25519 github.com') }}"
+    path: "/home/{{ deploy_key_user }}/.ssh/known_hosts"
+  become_user: "{{ deploy_key_user }}"
+
+- name: Configurar SSH para usar esta llave con GitHub
+  ansible.builtin.blockinfile:
+    path: "/home/{{ deploy_key_user }}/.ssh/config"
+    create: true
+    owner: "{{ deploy_key_user }}"
+    mode: '0600'
+    block: |
+      Host github.com
+        IdentityFile /home/{{ deploy_key_user }}/.ssh/{{ deploy_key_name }}
+        IdentitiesOnly yes
+  become: true
+
+
+- name: Clonar el repositorio usando el deploy key
+  ansible.builtin.git:
+    repo: "git@github.com:{{ github_runner_owner }}/{{ github_runner_repo }}.git"
+    dest: "/home/{{ deploy_key_user }}/{{ github_runner_repo }}"
+    key_file: "/home/{{ deploy_key_user }}/.ssh/{{ deploy_key_name }}"
+    accept_hostkey: true
+  become_user: "{{ deploy_key_user }}"

@@ -1,0 +1,50 @@
+---
+# Ejemplo de cómo integrar las roles nuevas con las existentes.
+# Ajusta nombres de grupos/hosts según tu inventory real:
+#
+# [bastion]
+# proxy
+#
+# [data_pipeline]
+# svr-airflow   <- control-plane k3s (12.0.2.241)
+# svr-rabbit
+# svr-celery-1
+# svr-celery-2
+#
+# [databases]
+# svr-db
+
+- name: Prerrequisitos de kernel/sysctl en todos los nodos del clúster
+  hosts: data_pipeline:databases
+  become: true
+  roles:
+    - node_prereqs
+
+- name: Configurar el control-plane k3s
+  hosts: svr-airflow
+  become: true
+  roles:
+    - k8s_master
+    - helm
+    - github_runner   # runner self-hosted "polaris-airflow" del CI/CD
+
+- name: Instalar el EBS CSI Driver y el StorageClass ebs-sc
+  # Requiere: IAM role/policy ya adjunta a las instancias (Terraform) y
+  # hop-limit del IMDS en 2. Pasar credenciales con --extra-vars o vault:
+  #   ansible-playbook site.yml --extra-vars "aws_ebs_key_id=... aws_ebs_access_key=..."
+  hosts: svr-airflow
+  become: true
+  roles:
+    - ebs_csi_driver
+
+- name: Unir los workers al clúster
+  hosts: svr-rabbit:svr-celery-1:svr-celery-2:svr-db
+  become: true
+  roles:
+    - k8s_worker
+
+- name: Configurar el bastion como reverse proxy hacia el NodePort de ingress-nginx
+  hosts: proxy
+  become: true
+  roles:
+    - nginx_proxy

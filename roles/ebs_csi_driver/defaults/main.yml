@@ -1,0 +1,13 @@
+---
+# Valores confirmados con `helm get values aws-ebs-csi-driver -n kube-system`
+# y `helm list -A` en el clúster real del proyecto.
+ebs_csi_chart_version: "2.65.1"
+ebs_csi_aws_region: "us-east-1"
+
+# Credenciales de la IAM user con la policy polaris-ec2-ebs-policy
+# (permisos EBS, incluyendo ec2:DescribeAvailabilityZones a nivel de cuenta).
+# NUNCA hardcodear los valores reales aquí — pásalos con:
+#   --extra-vars "aws_ebs_key_id=... aws_ebs_access_key=..."
+# o mejor, con ansible-vault.
+aws_ebs_key_id: "CHANGE_ME"
+aws_ebs_access_key: "CHANGE_ME"

@@ -1,0 +1,41 @@
+---
+# Rol reconstruido a partir de la configuración real encontrada en el host
+# "proxy" (bastion) del inventory: /etc/nginx/stream-enabled/airflow-stream.conf.
+# Nginx actúa como reverse proxy a nivel TCP (módulo stream), sin terminar TLS
+# — los certificados los sigue emitiendo cert-manager dentro del clúster.
+
+- name: Instalar Nginx (con soporte de módulo stream)
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Crear directorio stream-enabled (algunos paquetes de Nginx no lo traen por defecto)
+  ansible.builtin.file:
+    path: /etc/nginx/stream-enabled
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Confirmar que nginx.conf incluye stream-enabled/*.conf
+  ansible.builtin.lineinfile:
+    path: /etc/nginx/nginx.conf
+    line: "include /etc/nginx/stream-enabled/*.conf;"
+    insertafter: "^error_log"
+    state: present
+
+- name: Desplegar configuración de forwarding 80/443 -> NodePort del control-plane
+  ansible.builtin.template:
+    src: airflow-stream.conf.j2
+    dest: /etc/nginx/stream-enabled/airflow-stream.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reiniciar nginx
+
+- name: Habilitar e iniciar Nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started

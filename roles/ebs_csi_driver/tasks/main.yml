@@ -1,0 +1,98 @@
+---
+# Reconstruido a partir de la configuración real confirmada en el clúster
+# del proyecto (helm get values / kubectl get storageclass -o yaml).
+# Ejecutar en el control-plane (svr-airflow), DESPUÉS de k8s_master y
+# cilium_cli/helm, y ANTES de que el CI/CD de polaris-kubernetes intente
+# instalar Postgres/Grafana/Prometheus/RabbitMQ (que dependen de ebs-sc).
+#
+# Prerrequisitos fuera de este rol (verificar/documentar en Terraform):
+#   - IAM role/user con la policy polaris-ec2-ebs-policy adjunta
+#     (permisos EBS, incluyendo ec2:DescribeAvailabilityZones a nivel cuenta)
+#   - Hop limit del IMDS subido a 2 en las instancias EC2
+#     (requerido por el driver para resolver metadata desde la red de pods)
+
+- name: Agregar el repo de Helm del EBS CSI Driver
+  ansible.builtin.command: >
+    helm repo add aws-ebs-csi-driver
+    https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+  register: helm_repo_add
+  changed_when: "'has been added' in helm_repo_add.stdout"
+  failed_when: false
+
+- name: Actualizar los repos de Helm
+  ansible.builtin.command: helm repo update
+  changed_when: true
+
+- name: Crear el Secret con las credenciales de AWS para el driver
+  ansible.builtin.command: >
+    kubectl create secret generic aws-secret
+    -n kube-system
+    --from-literal=key_id={{ aws_ebs_key_id }}
+    --from-literal=access_key={{ aws_ebs_access_key }}
+    --dry-run=client -o yaml
+  register: aws_secret_manifest
+  changed_when: false
+  no_log: true
+
+- name: Aplicar el Secret de credenciales (idempotente vía kubectl apply)
+  ansible.builtin.shell: |
+    echo '{{ aws_secret_manifest.stdout }}' | kubectl apply -f -
+  changed_when: true
+  no_log: true
+
+- name: Instalar/actualizar el EBS CSI Driver vía Helm
+  ansible.builtin.command: >
+    helm upgrade --install aws-ebs-csi-driver
+    aws-ebs-csi-driver/aws-ebs-csi-driver
+    -n kube-system --create-namespace
+    --version {{ ebs_csi_chart_version }}
+    --set awsAccessSecret.name=aws-secret
+    --set controller.region={{ ebs_csi_aws_region }}
+    --set node.hostNetwork=true
+    --wait --timeout 10m
+  register: ebs_csi_install
+  changed_when: "'has been upgraded' in ebs_csi_install.stdout or 'has been installed' in ebs_csi_install.stdout"
+
+- name: Crear el StorageClass ebs-sc
+  ansible.builtin.template:
+    src: storageclass-ebs-sc.yaml.j2
+    dest: /tmp/storageclass-ebs-sc.yaml
+    mode: '0644'
+
+- name: Aplicar el StorageClass ebs-sc
+  ansible.builtin.command: kubectl apply -f /tmp/storageclass-ebs-sc.yaml
+  register: sc_apply
+  changed_when: "'created' in sc_apply.stdout or 'configured' in sc_apply.stdout"
+
+- name: Validar el driver con un PVC de prueba
+  ansible.builtin.copy:
+    dest: /tmp/test-ebs-pvc.yaml
+    mode: '0644'
+    content: |
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: ebs-csi-smoke-test
+        namespace: kube-system
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ebs-sc
+        resources:
+          requests:
+            storage: 1Gi
+
+- name: Aplicar el PVC de prueba
+  ansible.builtin.command: kubectl apply -f /tmp/test-ebs-pvc.yaml
+  changed_when: true
+
+- name: Esperar a que el PVC de prueba quede Bound
+  ansible.builtin.command: >
+    kubectl wait --for=jsonpath='{.status.phase}'=Bound
+    pvc/ebs-csi-smoke-test -n kube-system --timeout=120s
+  register: pvc_wait
+  changed_when: false
+  failed_when: pvc_wait.rc != 0
+
+- name: Limpiar el PVC de prueba
+  ansible.builtin.command: kubectl delete pvc ebs-csi-smoke-test -n kube-system
+  changed_when: true

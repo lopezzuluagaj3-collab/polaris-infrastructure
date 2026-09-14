@@ -35,7 +35,8 @@ resource "aws_iam_policy" "ebs_csi_policy" {
             "ec2:DescribeVolumes",
             "ec2:DescribeInstances",
             "ec2:DescribeSnapshots",
-            "ec2:DescribeAvailabilityZones"
+            "ec2:DescribeAvailabilityZones",
+            "ec2:DescribeTags"
             ]
             Resource = "*"
         },
@@ -48,7 +49,8 @@ resource "aws_iam_policy" "ebs_csi_policy" {
             "ec2:AttachVolume",
             "ec2:DetachVolume",
             "ec2:ModifyVolume",
-            "ec2:CreateTags"
+            "ec2:CreateTags",
+            "ec2:DeleteTags"
             ]
             Resource = [
             "arn:aws:ec2:*:*:volume/*",
@@ -68,12 +70,6 @@ resource "aws_iam_policy" "ebs_csi_policy" {
     })
     }
 
-# Elimina o comenta este bloque - es redundante, el usuario ya recibe
-# los permisos vía membresía al grupo (aws_iam_user_group_membership)
-# resource "aws_iam_user_policy_attachment" "ebs_csi_user_attach" {
-#   user       = aws_iam_user.ebs_csi_user.name
-#   policy_arn = aws_iam_policy.ebs_csi_policy.arn
-# }
 
 
 

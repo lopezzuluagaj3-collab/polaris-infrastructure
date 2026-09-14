@@ -1,0 +1,7 @@
+github_runner_version: "2.319.1"
+github_runner_repo_url: "https://github.com/lopezzuluagaj3-collab/polaris-kubernetes"
+github_runner_name: "polaris-kubernetes"
+github_runner_labels: "self-hosted,linux,x64,polaris-kubernetes"
+github_runner_work_dir: "_work"
+github_runner_user: "ubuntu"
+github_runner_home: "/home/ubuntu/actions-runner"

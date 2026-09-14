@@ -16,3 +16,15 @@
   become: true
   roles:
     - helm
+
+- name: 4. Configurar GitHub Actions Runner
+  hosts: svr-airflow
+  become: true
+  roles:
+    - github_runner
+
+- name: 5. Configurar Deploy Key para clonar el repo
+  hosts: svr-airflow
+  become: true
+  roles:
+    - deploy_key

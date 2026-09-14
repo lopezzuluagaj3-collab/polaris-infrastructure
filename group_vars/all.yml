@@ -1,0 +1,4 @@
+github_pat: "{{ lookup('env', 'GITHUB_PAT') | trim }}"
+github_runner_owner: "lopezzuluagaj3-collab"
+github_runner_repo: "polaris-kubernetes"
+k3s_control_plane_ip: "{{ lookup('env', 'IP_PANEL') | trim }}"

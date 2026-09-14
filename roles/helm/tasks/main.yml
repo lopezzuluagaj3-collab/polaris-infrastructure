@@ -1,4 +1,3 @@
----
 - name: Instalar Helm en el Control Plane
   ansible.builtin.shell: |
     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
@@ -16,9 +15,31 @@
   args:
     creates: /usr/local/bin/cilium
 
-- name: Desplegar/Actualizar CNI Cilium con eBPF en el clúster
+- name: Verificar si el release Helm de Cilium ya existe
+  ansible.builtin.command: /usr/local/bin/helm status cilium -n kube-system
+  register: cilium_release
+  changed_when: false
+  failed_when: false
+  become_user: ubuntu
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+
+- name: Instalar CNI Cilium con eBPF (clúster nuevo)
   ansible.builtin.command: >
-    /usr/local/bin/cilium upgrade
-    --set k8sServiceHost=12.0.2.241
+    /usr/local/bin/cilium install
+    --set k8sServiceHost={{ k3s_control_plane_ip }}
     --set k8sServicePort=6443
   become_user: ubuntu
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+  when: cilium_release.rc != 0
+
+- name: Actualizar CNI Cilium con eBPF (clúster existente)
+  ansible.builtin.command: >
+    /usr/local/bin/cilium upgrade
+    --set k8sServiceHost={{ k3s_control_plane_ip }}
+    --set k8sServicePort=6443
+  become_user: ubuntu
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+  when: cilium_release.rc == 0

@@ -1,0 +1,7 @@
+---
+# IP privada del control-plane k3s (svr-airflow / 12.0.2.241), donde escucha
+# el NodePort de ingress-nginx. Confirmado en /etc/nginx/stream-enabled/
+# del host "proxy" real del proyecto.
+k8s_control_plane_ip: "12.0.2.241"
+ingress_nodeport_http: 30080
+ingress_nodeport_https: 30443
