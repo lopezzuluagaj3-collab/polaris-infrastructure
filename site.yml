@@ -1,4 +1,10 @@
 ---
+- name: 0. Configurar Nginx Proxy (Bastion)
+  hosts: bastion
+  become: true
+  roles:
+    - nginx_proxy
+
 - name: 1. Configurar Control Plane de Kubernetes
   hosts: svr-airflow
   become: true
@@ -17,13 +23,19 @@
   roles:
     - helm
 
-- name: 4. Configurar GitHub Actions Runner
+- name: 4. Instalar EBS CSI Driver (StorageClass para PVCs)
+  hosts: svr-airflow
+  become: true
+  roles:
+    - ebs_csi_driver
+
+- name: 5. Configurar GitHub Actions Runner
   hosts: svr-airflow
   become: true
   roles:
     - github_runner
 
-- name: 5. Configurar Deploy Key para clonar el repo
+- name: 6. Configurar Deploy Key para clonar el repo
   hosts: svr-airflow
   become: true
   roles:

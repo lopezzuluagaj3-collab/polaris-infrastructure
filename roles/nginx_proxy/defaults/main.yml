@@ -1,7 +1,6 @@
 ---
-# IP privada del control-plane k3s (svr-airflow / 12.0.2.241), donde escucha
-# el NodePort de ingress-nginx. Confirmado en /etc/nginx/stream-enabled/
-# del host "proxy" real del proyecto.
-k8s_control_plane_ip: "12.0.2.241"
+# Usar variables de group_vars/all.yml:
+# k3s_control_plane_ip (IP_PANEL) - IP del control plane k3s
+# k3s_proxy_ip (IP_PROXY) - IP del proxy/bastion
 ingress_nodeport_http: 30080
 ingress_nodeport_https: 30443

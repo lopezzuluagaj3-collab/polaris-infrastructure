@@ -1,9 +1,9 @@
 stream {
     upstream airflow_http {
-        server {{ k8s_control_plane_ip }}:{{ ingress_nodeport_http }};
+        server {{ k3s_control_plane_ip }}:{{ ingress_nodeport_http }};
     }
     upstream airflow_https {
-        server {{ k8s_control_plane_ip }}:{{ ingress_nodeport_https }};
+        server {{ k3s_control_plane_ip }}:{{ ingress_nodeport_https }};
     }
     server {
         listen 80;

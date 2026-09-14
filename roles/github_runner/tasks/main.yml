@@ -48,10 +48,11 @@
     --name {{ github_runner_name }}
     --labels {{ github_runner_labels }}
     --work {{ github_runner_work_dir }}
+    --replace
   args:
     chdir: "{{ github_runner_home }}"
   become_user: "{{ github_runner_user }}"
-  when: not runner_configured.stat.exists 
+  when: not runner_configured.stat.exists
 
 
 - name: Instalar el runner como servicio systemd
@@ -59,6 +60,15 @@
   args:
     chdir: "{{ github_runner_home }}"
     creates: /etc/systemd/system/actions.runner.*.service
+  become: true
+
+- name: Configurar KUBECONFIG para el servicio del runner
+  ansible.builtin.lineinfile:
+    path: "{{ github_runner_home }}/.env"
+    line: "KUBECONFIG=/home/{{ github_runner_user }}/.kube/config"
+    create: true
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_user }}"
   become: true
 
 - name: Iniciar y habilitar el servicio del runner

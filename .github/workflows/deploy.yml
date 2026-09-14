@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "modules/**"
+      - "main.tf/**"
   pull_request:
     branches:
       - main
